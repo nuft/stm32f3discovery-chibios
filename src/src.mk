@@ -1,2 +1,7 @@
 PROJINC = ./src
-PROJSRC = src/main.c src/usbcfg.c src/l3gd20.c src/sensors.c src/shell_commands.c
+PROJSRC  = src/main.c
+PROJSRC += src/usbcfg.c
+PROJSRC += src/l3gd20.c
+PROJSRC += src/sensors.c
+PROJSRC += src/shell_commands.c
+PROJSRC += src/uart/blocking_uart_driver.c

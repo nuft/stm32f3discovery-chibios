@@ -3,7 +3,8 @@
 #include <chprintf.h>
 #include "usbcfg.h"
 #include "sensors.h"
-#include <shell_commands.h>
+#include "shell_commands.h"
+#include "uart/blocking_uart_driver.h"
 
 SerialUSBDriver SDU1;
 
@@ -26,13 +27,8 @@ static THD_FUNCTION(LEDThread, arg) {
     return 0;
 }
 
-int main(void) {
-    halInit();
-    chSysInit();
-
-    // LED status thread
-    chThdCreateStatic(waLEDThread, sizeof(waLEDThread), NORMALPRIO+1, LEDThread, NULL);
-
+static BaseSequentialStream *usb_cdc_init(void)
+{
     // USB CDC
     sduObjectInit(&SDU1);
     sduStart(&SDU1, &serusbcfg);
@@ -43,11 +39,31 @@ int main(void) {
     while (SDU1.config->usbp->state != USB_ACTIVE) {
         chThdSleepMilliseconds(10);
     }
+    return (BaseSequentialStream *) &SDU1;
+}
 
-    sensors_start();
+int main(void) {
+    halInit();
+    chSysInit();
+
+    // LED status thread
+    chThdCreateStatic(waLEDThread, sizeof(waLEDThread), NORMALPRIO+1, LEDThread, NULL);
+
+    // BaseSequentialStream *bs = usb_cdc_init();
+
+    // sensors_start();
+
+    // sdStart(&SD2, NULL);
+    // BaseSequentialStream *bs = (BaseSequentialStream *)&SD2;
+
+    BlockingUARTDriver bu;
+    blocking_uart_init(&bu, USART2, 115200);
+    BaseSequentialStream *bs = (BaseSequentialStream *)&bu;
+
+    chprintf(bs, "hello world\n");
 
     while (1) {
-        shell_run((BaseSequentialStream *)&SDU1);
+        shell_run(bs);
         chThdSleepMilliseconds(100);
     }
 }
