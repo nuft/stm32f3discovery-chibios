@@ -48,22 +48,23 @@ int main(void) {
     chSysInit();
 
     // LED status thread
-    chThdCreateStatic(waLEDThread, sizeof(waLEDThread), NORMALPRIO+1, LEDThread, NULL);
-
-    BaseSequentialStream *bs = usb_cdc_init();
+    // chThdCreateStatic(waLEDThread, sizeof(waLEDThread), NORMALPRIO+1, LEDThread, NULL);
 
     exti_setup();
 
     // sensors_start();
 
-    // sdStart(&SD2, NULL);
-    // BaseSequentialStream *bs = (BaseSequentialStream *)&SD2;
+    // BaseSequentialStream *bs = usb_cdc_init();
+
+    sdStart(&SD2, NULL);
+    BaseSequentialStream *bs = (BaseSequentialStream *)&SD2;
 
     // BlockingUARTDriver bu;
     // blocking_uart_init(&bu, USART2, 115200);
     // BaseSequentialStream *bs = (BaseSequentialStream *)&bu;
 
     while (1) {
+        // shell_run(usb_cdc_init());
         shell_run(bs);
         chThdSleepMilliseconds(100);
     }
