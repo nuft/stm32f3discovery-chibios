@@ -64,8 +64,8 @@ int main(void) {
     // BaseSequentialStream *bs = (BaseSequentialStream *)&bu;
 
     while (1) {
-        // shell_run(usb_cdc_init());
-        shell_run(bs);
+        shell_run(usb_cdc_init());
+        // shell_run(bs);
         chThdSleepMilliseconds(100);
     }
 }

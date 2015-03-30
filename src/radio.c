@@ -80,23 +80,28 @@ void cmd_radio_tx(BaseSequentialStream *chp, int argc, char *argv[])
     chEvtRegisterMaskWithFlags(&exti_events, &radio_event_listener,
         NRF_INTERRUPT_EVENT, EXTI_EVENT_NRF_IRQ);
 
-    static uint8_t tx_buf[32];
-    static uint32_t rx_buf[8];
-
+    static uint32_t tx_count = 0;
+    static uint32_t last_nb = 0;
+    static uint32_t dropcount = 0;
     while (1) {
         // clear interrupts
         nrf24l01p_write_register(nrf, STATUS, RX_DR | TX_DS | MAX_RT);
 
+        static uint32_t tx_buf[8];
+        tx_buf[0] = tx_count++;
         nrf24l01p_write_tx_payload(nrf, tx_buf, 32);
 
         nrf_ce_active();
-        eventmask_t ret = chEvtWaitAnyTimeout(NRF_INTERRUPT_EVENT, MS2ST(10));
+        eventmask_t ret = chEvtWaitAnyTimeout(NRF_INTERRUPT_EVENT, MS2ST(1000));
         nrf_ce_inactive();
 
         if (ret == 0) {
+            chprintf(chp, "TIMEOUT!\n");
             nrf24l01p_flush_tx(nrf);
             continue;
         }
+
+        palTogglePad(GPIOE, GPIOE_LED7_GREEN);
 
         uint8_t status = nrf24l01p_status(nrf);
         if (status & RX_DR) {
@@ -105,9 +110,25 @@ void cmd_radio_tx(BaseSequentialStream *chp, int argc, char *argv[])
                 nrf24l01p_flush_rx(nrf);
                 continue;
             }
+            static uint32_t rx_buf[8];
             nrf24l01p_read_rx_payload(nrf, rx_buf, len);
+
+            if (rx_buf[0] != last_nb + 1) {
+                if (rx_buf[0] > last_nb)
+                    dropcount += rx_buf[0] - last_nb;
+                else
+                    dropcount += 1;
+                chprintf(chp, "%u, (%u, %d%%)\n", dropcount, tx_count, dropcount * 100 / tx_count);
+            }
+            last_nb = rx_buf[0];
+            // chprintf(chp, "radio ack: %u\n", rx_buf[0]);
         } else if (status & MAX_RT) {
             nrf24l01p_flush_tx(nrf);
+            palTogglePad(GPIOE, GPIOE_LED3_RED);
+        }
+
+        if (status & TX_DS) {
+            palTogglePad(GPIOE, GPIOE_LED5_ORANGE);
         }
     }
 }
@@ -159,15 +180,16 @@ void cmd_radio_rx(BaseSequentialStream *chp, int argc, char *argv[])
     chEvtRegisterMaskWithFlags(&exti_events, &radio_event_listener,
         NRF_INTERRUPT_EVENT, EXTI_EVENT_NRF_IRQ);
 
-    static uint8_t ack[32];
-    static uint8_t rx_buf[32];
+    static uint32_t rx_nb = 0;
+
     while (1) {
         nrf24l01p_write_register(nrf, STATUS, RX_DR | TX_DS | MAX_RT);
         nrf_ce_active();
-        eventmask_t ret = chEvtWaitAnyTimeout(NRF_INTERRUPT_EVENT, MS2ST(100));
+        eventmask_t ret = chEvtWaitAnyTimeout(NRF_INTERRUPT_EVENT, MS2ST(1000));
         nrf_ce_inactive();
 
         if (ret == 0) {
+            chprintf(chp, "TIMEOUT!\n");
             nrf24l01p_flush_rx(nrf);
             continue;
         }
@@ -179,9 +201,15 @@ void cmd_radio_rx(BaseSequentialStream *chp, int argc, char *argv[])
                 nrf24l01p_flush_rx(nrf);
                 continue;
             }
+            static uint32_t rx_buf[8];
             nrf24l01p_read_rx_payload(nrf, rx_buf, len);
+            rx_nb = rx_buf[0];
+            // rx_buf[30] = '\0';
+            // chprintf(chp, "radio rx: %s\n", rx_buf);
         }
 
+        static uint32_t ack[8];
+        ack[0] = rx_nb;
         nrf24l01p_write_ack_payload(nrf, 0, ack, 32);
     }
 }
