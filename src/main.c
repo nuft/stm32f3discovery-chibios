@@ -3,7 +3,7 @@
 #include <chprintf.h>
 #include "usbcfg.h"
 #include "sensors.h"
-#include "shell_commands.h"
+#include "shell_cmds.h"
 #include "uart/blocking_uart_driver.h"
 
 SerialUSBDriver SDU1;
@@ -56,14 +56,14 @@ int main(void) {
     // sdStart(&SD2, NULL);
     // BaseSequentialStream *bs = (BaseSequentialStream *)&SD2;
 
-    BlockingUARTDriver bu;
-    blocking_uart_init(&bu, USART2, 115200);
-    BaseSequentialStream *bs = (BaseSequentialStream *)&bu;
+    // BlockingUARTDriver bu;
+    // blocking_uart_init(&bu, USART2, 115200);
+    // BaseSequentialStream *bs = (BaseSequentialStream *)&bu;
 
-    chprintf(bs, "hello world\n");
+    // chprintf(bs, "hello world\n");
 
     while (1) {
-        shell_run(bs);
+        // shell_run(bs);
         chThdSleepMilliseconds(100);
     }
 }

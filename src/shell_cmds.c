@@ -2,7 +2,7 @@
 #include <chprintf.h>
 #include "shell.h"
 #include "sensors.h"
-#include "shell_commands.h"
+#include "shell_cmds.h"
 
 #define SHELL_WA_SIZE   THD_WORKING_AREA_SIZE(2048)
 
@@ -42,7 +42,7 @@ static void cmd_threads(BaseSequentialStream *chp, int argc, char *argv[])
     } while (tp != NULL);
 }
 
-static void cmd_sensors(BaseSequentialStream *chp, int argc, char *argv[])
+static void cmd_gyro(BaseSequentialStream *chp, int argc, char *argv[])
 {
     (void) argc;
     (void) argv;
@@ -67,7 +67,7 @@ static void cmd_sensors(BaseSequentialStream *chp, int argc, char *argv[])
 static const ShellCommand commands[] = {
     {"mem", cmd_mem},
     {"threads", cmd_threads},
-    {"sensors", cmd_sensors},
+    {"gyro", cmd_gyro},
     {NULL, NULL}
 };
 
