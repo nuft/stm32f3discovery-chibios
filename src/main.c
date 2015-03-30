@@ -5,6 +5,7 @@
 #include "sensors.h"
 #include "shell_cmds.h"
 #include "uart/blocking_uart_driver.h"
+#include "exti.h"
 
 SerialUSBDriver SDU1;
 
@@ -49,7 +50,9 @@ int main(void) {
     // LED status thread
     chThdCreateStatic(waLEDThread, sizeof(waLEDThread), NORMALPRIO+1, LEDThread, NULL);
 
-    // BaseSequentialStream *bs = usb_cdc_init();
+    BaseSequentialStream *bs = usb_cdc_init();
+
+    exti_setup();
 
     // sensors_start();
 
@@ -60,10 +63,8 @@ int main(void) {
     // blocking_uart_init(&bu, USART2, 115200);
     // BaseSequentialStream *bs = (BaseSequentialStream *)&bu;
 
-    // chprintf(bs, "hello world\n");
-
     while (1) {
-        // shell_run(bs);
+        shell_run(bs);
         chThdSleepMilliseconds(100);
     }
 }

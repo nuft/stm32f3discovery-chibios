@@ -5,3 +5,6 @@ PROJSRC += src/l3gd20.c
 PROJSRC += src/sensors.c
 PROJSRC += src/shell_cmds.c
 PROJSRC += src/uart/blocking_uart_driver.c
+PROJSRC += src/exti.c
+PROJSRC += src/nrf24l01p.c
+PROJSRC += src/radio.c

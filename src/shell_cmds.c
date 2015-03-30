@@ -2,6 +2,7 @@
 #include <chprintf.h>
 #include "shell.h"
 #include "sensors.h"
+#include "radio.h"
 #include "shell_cmds.h"
 
 #define SHELL_WA_SIZE   THD_WORKING_AREA_SIZE(2048)
@@ -68,6 +69,8 @@ static const ShellCommand commands[] = {
     {"mem", cmd_mem},
     {"threads", cmd_threads},
     {"gyro", cmd_gyro},
+    {"tx", cmd_radio_tx},
+    {"rx", cmd_radio_rx},
     {NULL, NULL}
 };
 
