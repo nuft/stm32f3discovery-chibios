@@ -9,7 +9,7 @@
 
 SerialUSBDriver SDU1;
 
-#define GPIOE_LED_STATUS GPIOE_LED7_GREEN
+#define GPIOE_LED_STATUS GPIOE_LED6_GREEN
 
 static THD_WORKING_AREA(waLEDThread, 128);
 static THD_FUNCTION(LEDThread, arg) {
@@ -48,23 +48,25 @@ int main(void) {
     chSysInit();
 
     // LED status thread
-    // chThdCreateStatic(waLEDThread, sizeof(waLEDThread), NORMALPRIO+1, LEDThread, NULL);
+    chThdCreateStatic(waLEDThread, sizeof(waLEDThread), NORMALPRIO+1, LEDThread, NULL);
 
     exti_setup();
 
     // sensors_start();
 
     // BaseSequentialStream *bs = usb_cdc_init();
-
     sdStart(&SD2, NULL);
     BaseSequentialStream *bs = (BaseSequentialStream *)&SD2;
-
-    // BlockingUARTDriver bu;
-    // blocking_uart_init(&bu, USART2, 115200);
-    // BaseSequentialStream *bs = (BaseSequentialStream *)&bu;
+/*/
+    //cmd_radio_rx(bs, 0, 0);
+    cmd_radio_tx(bs, 0, 0);
+/*/
+    cmd_radio_rx(bs, 0, 0);
+    // cmd_radio_tx(bs, 0, 0);
+//*/
 
     while (1) {
-        shell_run(usb_cdc_init());
+        // shell_run(usb_cdc_init());
         // shell_run(bs);
         chThdSleepMilliseconds(100);
     }

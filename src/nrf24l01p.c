@@ -122,6 +122,11 @@ void nrf24l01p_write_tx_payload(nrf24l01p_t *dev, const uint8_t *buf, uint8_t le
     nrf24l01p_command_write(dev, W_TX_PAYLOAD, buf, len);
 }
 
+void nrf24l01p_write_tx_payload_no_ack(nrf24l01p_t *dev, const uint8_t *buf, uint8_t len)
+{
+    nrf24l01p_command_write(dev, W_TX_PAYLOAD_NOACK, buf, len);
+}
+
 void nrf24l01p_write_ack_payload(nrf24l01p_t *dev, uint8_t pipe, const uint8_t *buf, uint8_t len)
 {
     nrf24l01p_command_write(dev, W_ACK_PAYLOAD | (pipe & 0x07), buf, len);

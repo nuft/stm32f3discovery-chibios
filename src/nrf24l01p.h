@@ -127,6 +127,7 @@ void nrf24l01p_flush_rx(nrf24l01p_t *dev);
 uint8_t nrf24l01p_read_rx_payload_len(nrf24l01p_t *dev);
 void nrf24l01p_read_rx_payload(nrf24l01p_t *dev, uint8_t *buf, uint8_t len);
 void nrf24l01p_write_tx_payload(nrf24l01p_t *dev, const uint8_t *buf, uint8_t len);
+void nrf24l01p_write_tx_payload_no_ack(nrf24l01p_t *dev, const uint8_t *buf, uint8_t len);
 void nrf24l01p_write_ack_payload(nrf24l01p_t *dev, uint8_t pipe, const uint8_t *buf, uint8_t len);
 void nrf24l01p_set_addr(nrf24l01p_t *dev, uint8_t reg, const uint8_t *addr, uint8_t len);
 void nrf24l01p_set_channel(nrf24l01p_t *dev, uint8_t ch);
