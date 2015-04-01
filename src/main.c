@@ -57,7 +57,9 @@ int main(void) {
     // BaseSequentialStream *bs = usb_cdc_init();
     sdStart(&SD2, NULL);
     BaseSequentialStream *bs = (BaseSequentialStream *)&SD2;
-/*/
+
+    chThdSleepMilliseconds(100);
+//*/
     //cmd_radio_rx(bs, 0, 0);
     cmd_radio_tx(bs, 0, 0);
 /*/

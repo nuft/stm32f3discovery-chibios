@@ -42,6 +42,7 @@ void nrf_setup_ptx(nrf24l01p_t *dev)
 {
     nrf_ce_inactive();
     // 2 byte CRC, enable TX_DS, RX_DR and MAX_RT IRQ
+    // uint8_t config = 0;
     uint8_t config = EN_CRC;
     nrf24l01p_write_register(dev, CONFIG, config);
     // nrf24l01p_write_register(dev, CONFIG, PWR_UP | EN_CRC | CRCO | MASK_RX_DR | MASK_MAX_RT);
@@ -55,6 +56,8 @@ void nrf_setup_ptx(nrf24l01p_t *dev)
     nrf24l01p_write_register(dev, SETUP_RETR, 0);
     // disable dynamic packet length (DPL)
     nrf24l01p_write_register(dev, FEATURE, 0);
+    // disable Enhanced ShockBurst Auto Acknowledgment
+    nrf24l01p_write_register(dev, EN_AA, 0);
     // 3 byte address length
     nrf24l01p_write_register(dev, SETUP_AW, AW_3);
     // TX address
@@ -78,6 +81,7 @@ void cmd_radio_tx(BaseSequentialStream *chp, int argc, char *argv[])
     spi_init();
     nrf24l01p_init(nrf, &SPID2);
     nrf_setup_ptx(nrf);
+    chThdSleepMilliseconds(1);
 
     event_listener_t radio_event_listener;
     chEvtRegisterMaskWithFlags(&exti_events, &radio_event_listener,
@@ -90,7 +94,8 @@ void cmd_radio_tx(BaseSequentialStream *chp, int argc, char *argv[])
 
         static uint32_t tx_buf[8];
         tx_buf[0] = tx_count++;
-        nrf24l01p_write_tx_payload_no_ack(nrf, (uint8_t *) tx_buf, 32);
+        // nrf24l01p_write_tx_payload_no_ack(nrf, (uint8_t *) tx_buf, 32);
+        nrf24l01p_write_tx_payload(nrf, (uint8_t *) tx_buf, 32);
 
         nrf_ce_active();
         eventmask_t ret = chEvtWaitAnyTimeout(NRF_INTERRUPT_EVENT, MS2ST(1000));
@@ -111,6 +116,7 @@ void nrf_setup_prx(nrf24l01p_t *dev)
 {
     nrf_ce_inactive();
     // 2 byte CRC, enable RX_DR, mask MAX_RT and TX_DS IRQ
+    // nrf24l01p_write_register(dev, CONFIG, PRIM_RX | PWR_UP);
     nrf24l01p_write_register(dev, CONFIG, PRIM_RX | PWR_UP | EN_CRC);
     // nrf24l01p_write_register(dev, CONFIG, PRIM_RX | PWR_UP | EN_CRC | CRCO
     //     | MASK_TX_DS | MASK_MAX_RT);
@@ -119,8 +125,7 @@ void nrf_setup_prx(nrf24l01p_t *dev)
     // 0dBm power, datarate 2M/1M/250K
     nrf24l01p_write_register(dev, RF_SETUP, RF_PWR(3) | RF_DR_250K);
     // disable dynamic packet length (DPL)
-    // nrf24l01p_write_register(dev, FEATURE, 0);
-    // nrf24l01p_write_register(dev, DYNPD, 0);
+    nrf24l01p_write_register(dev, FEATURE, 0);
     // 3 byte address length
     nrf24l01p_write_register(dev, SETUP_AW, AW_3);
     // RX address
@@ -147,6 +152,7 @@ void cmd_radio_rx(BaseSequentialStream *chp, int argc, char *argv[])
     spi_init();
     nrf24l01p_init(nrf, &SPID2);
     nrf_setup_prx(nrf);
+    chThdSleepMilliseconds(1);
 
     event_listener_t radio_event_listener;
     chEvtRegisterMaskWithFlags(&exti_events, &radio_event_listener,
@@ -154,39 +160,50 @@ void cmd_radio_rx(BaseSequentialStream *chp, int argc, char *argv[])
 
     uint32_t rx_nb = 0;
     uint32_t drop_count = 0;
-    // nrf_ce_active();
+    nrf_ce_active();
     while (1) {
-        nrf_ce_active();
+        // chThdSleepMilliseconds(1);
         eventmask_t ret = chEvtWaitAnyTimeout(NRF_INTERRUPT_EVENT, MS2ST(1000));
-        nrf_ce_inactive();
+
+        // nrf_ce_active();
+        // eventmask_t ret = chEvtWaitAnyTimeout(NRF_INTERRUPT_EVENT, MS2ST(1000));
+        // nrf_ce_inactive();
 
         if (ret == 0) {
             chprintf(chp, "TIMEOUT!\n");
-            // nrf24l01p_flush_rx(nrf);
+            nrf24l01p_flush_rx(nrf);
             palTogglePad(GPIOE, GPIOE_LED3_RED);
-            // continue;
+            continue;
         }
 
         uint8_t status = nrf24l01p_status(nrf);
         if (status & RX_DR) {
+            // clear status flags
+            nrf24l01p_write_register(nrf, STATUS, RX_DR | TX_DS | MAX_RT);
+
             uint8_t len = nrf24l01p_read_rx_payload_len(nrf);
             if (len == 0 || len > 32) { // invalid length
+                palTogglePad(GPIOE, GPIOE_LED3_RED);
                 nrf24l01p_flush_rx(nrf);
                 continue;
             }
+
             static uint32_t rx_buf[8];
             nrf24l01p_read_rx_payload(nrf, (uint8_t *) rx_buf, len);
-            if (rx_buf[0] >= rx_nb + 1) {
+            // chprintf(chp, ".");
+            if (rx_buf[0] > rx_nb + 1) {
                 drop_count += rx_buf[0] - rx_nb;
-                chprintf(chp, "%u\n", (unsigned int)drop_count);
+                // chprintf(chp, "%u\n", (unsigned int)drop_count);
+                chprintf(chp, "#");
                 palTogglePad(GPIOE, GPIOE_LED5_ORANGE);
             }
             rx_nb = rx_buf[0];
             palTogglePad(GPIOE, GPIOE_LED7_GREEN);
-        } else {
-            palTogglePad(GPIOE, GPIOE_LED3_RED);
-            nrf24l01p_write_register(nrf, STATUS, RX_DR | TX_DS | MAX_RT);
-            nrf24l01p_flush_rx(nrf);
         }
+        //  else {
+        //     palTogglePad(GPIOE, GPIOE_LED3_RED);
+        //     nrf24l01p_write_register(nrf, STATUS, RX_DR | TX_DS | MAX_RT);
+        //     nrf24l01p_flush_rx(nrf);
+        // }
     }
 }
