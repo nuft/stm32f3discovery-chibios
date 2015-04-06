@@ -1,6 +1,7 @@
 #include <hal.h>
 #include <stdint.h>
 #include "nrf24l01p.h"
+#include "nrf24l01p_registers.h"
 
 // Commands
 #define R_REGISTER          0x00 // 000A AAAA
@@ -14,15 +15,6 @@
 #define W_ACK_PAYLOAD       0xA8 // 1010 1PPP
 #define W_TX_PAYLOAD_NOACK  0xB0
 #define NOP                 0xFF
-
-/*
- *  nRF24L01+ interface:
- *  IRQ: interrupt (out)
- *  CE: chip enable (in)
- *  SPI: CSN, SCK, MOSI, MISO
- *  SPI mode: MSBit first, LSByte first, CSN active low,
- *    max 10Mbps, cpol=0 (idle=low), cpha=0 (first edge)
- */
 
 void nrf24l01p_init(nrf24l01p_t *dev, SPIDriver *spi)
 {
