@@ -2,6 +2,7 @@
 #include <hal.h>
 #include <stdint.h>
 #include "nrf24l01p.h"
+#include "nrf24l01p_registers.h"
 #include "radio.h"
 #include "exti.h"
 #include <chprintf.h>
